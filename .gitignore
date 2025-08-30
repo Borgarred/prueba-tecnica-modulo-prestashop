@@ -1,0 +1,5 @@
+# Ignorar todo el core de PrestaShop excepto nuestro módulo
+prestashop-src/*
+!prestashop-src/modules/
+prestashop-src/modules/*
+!prestashop-src/modules/pago_tarjeta_prueba/

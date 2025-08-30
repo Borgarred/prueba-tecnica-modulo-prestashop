@@ -1,0 +1,33 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: prestashop_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: prestashop
+    volumes:
+      - db_data:/var/lib/mysql
+
+  prestashop:
+    image: prestashop/prestashop:8.2.2-apache
+    container_name: prestashop_app
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      DB_SERVER: db
+      DB_NAME: prestashop
+      DB_USER: root
+      DB_PASSWD: root
+      PS_INSTALL_AUTO: 0 # Instalación manual
+      PS_DEV_MODE: 1
+    volumes:
+      - ./prestashop-src:/var/www/html # Código editable desde VS Code
+      - cache_data:/var/www/html/var/cache # Cache con permisos correctos
+      - logs_data:/var/www/html/var/logs # Logs con permisos correctos
+
+volumes:
+  db_data:
+  cache_data:
+  logs_data:

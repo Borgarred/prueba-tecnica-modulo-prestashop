@@ -1,9 +1,13 @@
 <?php
+/**
+ * Módulo de pago con tarjeta de crédito para PrestaShop 1.7 y 8
+ * Compatible con ambas versiones
+ */
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class CreditCardPay extends PaymentModule
+class Pago_tarjeta_prueba extends PaymentModule
 {
     public function __construct()
     {
@@ -184,7 +188,7 @@ class CreditCardPay extends PaymentModule
         $payment_option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $payment_option->setCallToActionText($this->l('Pay by Credit Card'))
                       ->setAction($this->context->link->getModuleLink($this->name, 'validation', array(), true))
-                      ->setAdditionalInformation($this->context->smarty->fetch('module:creditcardpay/views/templates/front/payment_infos.tpl'))
+                      ->setAdditionalInformation($this->context->smarty->fetch('module:pago_tarjeta_prueba/views/templates/front/payment_infos.tpl'))
                       ->setForm($this->generateForm());
 
         return [$payment_option];
@@ -212,24 +216,11 @@ class CreditCardPay extends PaymentModule
     {
         $this->context->smarty->assign([
             'action' => $this->context->link->getModuleLink($this->name, 'validation', array(), true),
+            'module_dir' => $this->_path
         ]);
 
-        return $this->context->smarty->fetch('module:creditcardpay/views/templates/front/payment_form.tpl');
-    }
-
-    public function validateCardNumber($cardNumber)
-    {
-        // Limpiar espacios y guiones
-        $cardNumber = str_replace([' ', '-'], '', $cardNumber);
-        
-        // Verificar números de prueba
-        if ($cardNumber === '1234567890123456') {
-            return 'success';
-        } elseif ($cardNumber === '9999999999999999') {
-            return 'failed';
-        }
-        
-        return 'failed'; // Cualquier otro número es tratado como fallido
+        return $this->context->smarty->fetch('module:pago_tarjeta_prueba/views/templates/front/payment_form.tpl');
     }
 }
+
 ?>

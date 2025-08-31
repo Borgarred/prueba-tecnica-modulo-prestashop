@@ -20,7 +20,6 @@ class Pago_tarjeta_prueba extends PaymentModule
 
         $this->displayName = $this->l('Pago tarjeta prueba');
         $this->description = $this->l('Módulo de pago con tarjeta.');
-
         $this->confirmUninstall = $this->l('¿Estás seguro de que quieres desinstalar este módulo?');
     }
 
@@ -31,7 +30,7 @@ class Pago_tarjeta_prueba extends PaymentModule
         }
 
         return parent::install()
-            && $this->registerHook('paymentOptions') // compatibilidad PrestaShop 1.7+
+            && $this->registerHook('paymentOptions')
             && $this->registerHook('paymentReturn')
             && $this->registerHook('displayHeader')
             && Configuration::updateValue('PAGO_TARJETA_PRUEBA_ACTIVE', true);
@@ -43,7 +42,7 @@ class Pago_tarjeta_prueba extends PaymentModule
             && parent::uninstall();
     }
 
-    public function getContent() // Página de configuración del módulo
+    public function getContent()
     {
         $output = '';
 
@@ -56,9 +55,8 @@ class Pago_tarjeta_prueba extends PaymentModule
         return $output . $this->displayForm();
     }
 
-        public function displayForm() // Formulario de configuración
+    public function displayForm()
     {
-        // Asignar variables al template
         $this->context->smarty->assign([
             'module_dir' => $this->_path,
             'module_name' => $this->name,
@@ -67,7 +65,6 @@ class Pago_tarjeta_prueba extends PaymentModule
             'form_action' => $this->context->link->getAdminLink('AdminModules', false)
                 . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name,
             'token' => Tools::getAdminTokenLite('AdminModules'),
-            // Textos traducibles
             'l_config_title' => $this->l('Configuración del Módulo de Pago'),
             'l_activate_module' => $this->l('Activar módulo de pago'),
             'l_activated' => $this->l('Activado'),
@@ -78,8 +75,44 @@ class Pago_tarjeta_prueba extends PaymentModule
             'l_fail_card' => $this->l('Fallo: 9999 9999 9999 9999'),
         ]);
 
-        // Renderizar el template
         return $this->context->smarty->fetch($this->local_path . 'views/templates/admin/config_form.tpl');
     }
 
+    public function hookPaymentOptions($params)
+    {
+        if (!$this->active || !Configuration::get('PAGO_TARJETA_PRUEBA_ACTIVE')) {
+            return;
+        }
+
+        $paymentOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+        $paymentOption->setCallToActionText($this->l('Pagar con tarjeta de crédito'))
+                      ->setAction($this->context->link->getModuleLink($this->name, 'payment', [], true))
+                      ->setAdditionalInformation($this->context->smarty->fetch('module:pago_tarjeta_prueba/views/templates/hook/payment_info.tpl'))
+                      ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/payment.png'));
+
+        return [$paymentOption];
+    }
+
+    public function hookPaymentReturn($params)
+    {
+        if (!$this->active) {
+            return;
+        }
+
+        $state = $params['order']->getCurrentState();
+
+        if (in_array($state, [Configuration::get('PS_OS_PAYMENT'), Configuration::get('PS_OS_OUTOFSTOCK_PAID')])) {
+            $this->context->smarty->assign([
+                'total_to_pay' => Tools::displayPrice($params['order']->getOrdersTotalPaid(), new Currency($params['order']->id_currency), false),
+                'shop_name' => $this->context->shop->name,
+                'reference' => $params['order']->reference,
+                'contact_url' => $this->context->link->getPageLink('contact', true)
+            ]);
+        } else {
+            $this->context->smarty->assign('status', 'error');
+        }
+
+        return $this->context->smarty->fetch('module:pago_tarjeta_prueba/views/templates/hook/modulo_pago.tpl');
+    }
+ 
 }

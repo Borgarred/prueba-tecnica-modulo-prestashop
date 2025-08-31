@@ -5,6 +5,6 @@ class Pago_tarjeta_pruebaPaymentModuleFrontController extends ModuleFrontControl
     public function initContent()
     {
         parent::initContent();
-        $this->setTemplate('module:pago_tarjeta_prueba/views/templates/front/payment.tpl');
+        $this->setTemplate('module:pago_tarjeta_prueba/views/templates/front/modulo_pago.tpl');
     }
 }

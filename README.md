@@ -84,7 +84,8 @@ pago_tarjeta_prueba/
 
 - Accedo al módulo usando la ruta:
   http://localhost:8080/index.php?fc=module&module=pago_tarjeta_prueba&controller=payment
-  ![alt text](image.png)
+
+  ![alt text](imagen-readme.png)
 
 3. **Implementar la lógica real:**
 

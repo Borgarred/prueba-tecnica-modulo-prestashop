@@ -97,15 +97,19 @@ pago_tarjeta_prueba/
    - Una vez instalado, he verificado su correcto funcionamiento en el _front-office_ para asegurar que cumple con los requisitos de la prueba técnica.
 
 **Vista previa módulo:**
+
 ![alt text](imgs-readme/modulo.png)
 
 **Error en el pago:**
+
 ![alt text](imgs-readme/image-1.png)
 
 **Confirmación de pago:**
+
 ![alt text](imgs-readme/image-3.png)
 
 **Historial de pedidos:**
+
 ![alt text](imgs-readme/image-4.png)
 
 **Autor del módulo:**

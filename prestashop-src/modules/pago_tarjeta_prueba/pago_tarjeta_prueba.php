@@ -32,7 +32,7 @@ class Pago_tarjeta_prueba extends PaymentModule
         return parent::install()
             && $this->registerHook('paymentOptions')
             && $this->registerHook('paymentReturn')
-            && $this->registerHook('displayHeader')
+            && $this->registerHook('displayHeader') // Hook para cargar recursos
             && Configuration::updateValue('PAGO_TARJETA_PRUEBA_ACTIVE', true);
     }
 
@@ -79,36 +79,35 @@ class Pago_tarjeta_prueba extends PaymentModule
     }
     
     public function hookPaymentOptions($params)
-{
-    if (!$this->active || !Configuration::get('PAGO_TARJETA_PRUEBA_ACTIVE')) {
-        return;
+    {
+        if (!$this->active || !Configuration::get('PAGO_TARJETA_PRUEBA_ACTIVE')) {
+            return;
+        }
+
+        // Si hay un error en la URL al redirigir después de un fallo), lo pasamos a Smarty
+        if (Tools::getValue('error') === '1') {
+            $this->context->smarty->assign('error_message', $this->l('El pago con tarjeta ha fallado. Por favor, revisa la información de la tarjeta o utiliza otro método de pago.'));
+        }
+
+        $this->context->smarty->assign([
+            'total_to_pay' => $this->context->cart->getOrderTotal(true, Cart::BOTH),
+            'currency' => new Currency($this->context->cart->id_currency),
+            'cart_id' => $this->context->cart->id,
+            'secure_key' => $this->context->customer->secure_key,
+            'module_name' => $this->name,
+            'form_action_url' => $this->context->link->getModuleLink($this->name, 'payment', [], true),
+        ]);
+
+        $payment_form = $this->context->smarty->fetch('module:' . $this->name . '/views/templates/front/modulo_pago.tpl');
+
+        $paymentOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+        $paymentOption->setCallToActionText($this->l('Pagar con tarjeta de crédito'))
+                      ->setAdditionalInformation($payment_form)
+                      ->setModuleName($this->name)
+                      ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/tarjeta-credito-icon.png'));
+
+        return [$paymentOption];
     }
-
-    // Si hay un error en la URL (al redirigir después de un fallo), lo pasamos a Smarty
-    if (Tools::getValue('error') === '1') {
-        $this->context->smarty->assign('error_message', $this->l('El pago con tarjeta ha fallado. Por favor, revisa la información de la tarjeta o utiliza otro método de pago.'));
-    }
-
-    $this->context->smarty->assign([
-        'total_to_pay' => $this->context->cart->getOrderTotal(true, Cart::BOTH),
-        'currency' => new Currency($this->context->cart->id_currency),
-        'cart_id' => $this->context->cart->id,
-        'secure_key' => $this->context->customer->secure_key,
-        'module_name' => $this->name,
-        'form_action_url' => $this->context->link->getModuleLink($this->name, 'payment', [], true),
-    ]);
-
-    $payment_form = $this->context->smarty->fetch('module:' . $this->name . '/views/templates/front/modulo_pago.tpl');
-
-    $paymentOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-    $paymentOption->setCallToActionText($this->l('Pagar con tarjeta de crédito'))
-                  ->setAdditionalInformation($payment_form)
-                  // <-- crucial: indicamos el nombre del módulo para que PS genere data-module-name correctamente
-                  ->setModuleName($this->name)
-                  ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/tarjeta-credito-icon.png'));
-
-    return [$paymentOption];
-}
 
 
     public function hookPaymentReturn($params)
@@ -133,12 +132,21 @@ class Pago_tarjeta_prueba extends PaymentModule
         return $this->context->smarty->fetch('module:pago_tarjeta_prueba/views/templates/hook/payment_return.tpl');
     }
     
-    /**
-     * Define el hook para el encabezado de la página.
-     */
     public function hookDisplayHeader()
     {
-        // Puedes agregar aquí archivos CSS o JS si es necesario.
-        // En este caso, lo dejamos vacío para que el módulo se instale.
+        // Añadir CSS
+        $this->context->controller->addCSS($this->_path . 'views/css/payment.css');
+
+        // Añadir JavaScript
+        // Con la función registerJavascript, indicamos que se cargue al final del body para no bloquear la renderización de la página
+        if (version_compare(_PS_VERSION_, '1.7', '>=')) {
+            $this->context->controller->registerJavascript(
+                'modules-pago-tarjeta-prueba-js',
+                'modules/' . $this->name . '/views/js/payment.js',
+                ['position' => 'bottom', 'priority' => 150]
+            );
+        } else {
+            $this->context->controller->addJS($this->_path . 'views/js/payment.js');
+        }
     }
 }

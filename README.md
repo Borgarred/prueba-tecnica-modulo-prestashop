@@ -85,7 +85,7 @@ pago_tarjeta_prueba/
 - Accedo al módulo usando la ruta:
   http://localhost:8080/index.php?fc=module&module=pago_tarjeta_prueba&controller=payment
 
-  ![alt text](imagen-readme.png)
+  ![alt text](imgs-readme/modulo-prueba.png)
 
 3. **Implementar la lógica real:**
 
@@ -96,7 +96,17 @@ pago_tarjeta_prueba/
    - El módulo se puede instalar desde el _back-office_ de PrestaShop navegando a `Módulos > Módulo y Servicios`.
    - Una vez instalado, he verificado su correcto funcionamiento en el _front-office_ para asegurar que cumple con los requisitos de la prueba técnica.
 
-![alt text](image.png)
+**Vista previa módulo:**
+![alt text](imgs-readme/modulo.png)
+
+**Error en el pago:**
+![alt text](imgs-readme/image-1.png)
+
+**Confirmación de pago:**
+![alt text](imgs-readme/image-3.png)
+
+**Historial de pedidos:**
+![alt text](imgs-readme/image-4.png)
 
 **Autor del módulo:**
 _Borja Garramiola_

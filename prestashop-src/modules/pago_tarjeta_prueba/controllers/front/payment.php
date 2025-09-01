@@ -15,7 +15,6 @@ class Pago_tarjeta_pruebaPaymentModuleFrontController extends ModuleFrontControl
     {
         parent::initContent();
 
-        // Si se accede por GET mostramos la plantilla (útil para debug / acceso directo)
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $this->setTemplate('module:pago_tarjeta_prueba/views/templates/front/modulo_pago.tpl');
         }
@@ -31,16 +30,11 @@ class Pago_tarjeta_pruebaPaymentModuleFrontController extends ModuleFrontControl
             exit;
         }
 
-        // Si el formulario fue enviado por POST normal ( fallback )
         if (Tools::getValue('pago_tarjeta_prueba_submit')) {
             $this->processPayment(false);
         }
     }
 
-    /**
-     * @param bool $isAjax Si es true no redirigimos: devolvemos array con resultado.
-     * @return array|null
-     */
     protected function processPayment($isAjax = false)
     {
         $card_number_raw = Tools::getValue('card_number');
@@ -90,17 +84,14 @@ class Pago_tarjeta_pruebaPaymentModuleFrontController extends ModuleFrontControl
 
                 Tools::redirect($redirect);
             } else {
-                // PAGO FALLIDO: NO SE VÁLIDA EL PEDIDO, solo se devuelve un error
+                // PAGO FALLIDO: NO SE VÁLIDA EL PEDIDO
                 $msg = $this->module->l('El pago con tarjeta ha fallado.');
                 
-                // NOTA: No se llama a validateOrder() aquí, para que el carrito no se vacíe.
-                // El cliente permanece en la página de checkout.
                 
                 if ($isAjax) {
                     return ['success' => false, 'error' => $msg];
                 }
 
-                // Fallback para POST normal
                 Tools::redirect('index.php?controller=order&step=3&error=1');
             }
         } catch (Exception $e) {
@@ -111,8 +102,6 @@ class Pago_tarjeta_pruebaPaymentModuleFrontController extends ModuleFrontControl
             if ($isAjax) {
                 return ['success' => false, 'error' => $msg];
             }
-
-            // Fallback para POST normal
             Tools::redirect('index.php?controller=order&step=3&error=1');
         }
     }

@@ -1,7 +1,3 @@
-{*
-* Template del formulario de configuración del módulo
-* Ubicación: /views/templates/admin/config_form.tpl
-*}
 
 <div class="panel">
     <div class="panel-heading">
@@ -62,7 +58,6 @@
     </div>
 </div>
 
-{* CSS personalizado para mejorar el diseño *}
 <style>
 .alert-info {
     background-color: #d9edf7;

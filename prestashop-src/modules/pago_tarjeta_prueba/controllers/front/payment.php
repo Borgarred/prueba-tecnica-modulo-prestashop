@@ -61,7 +61,7 @@ class Pago_tarjeta_pruebaPaymentModuleFrontController extends ModuleFrontControl
 
         try {
             if ($sanitized_card_number === '1234567890123456') {
-                // Pago aceptado
+                // PAGO ACEPTADO: SE VÁLIDA EL PEDIDO
                 $this->module->validateOrder(
                     (int)$cart->id,
                     (int)Configuration::get('PS_OS_PAYMENT'),
@@ -90,37 +90,29 @@ class Pago_tarjeta_pruebaPaymentModuleFrontController extends ModuleFrontControl
 
                 Tools::redirect($redirect);
             } else {
-                // Pago fallido -> crear pedido con estado de error según requisitos
-                $this->module->validateOrder(
-                    (int)$cart->id,
-                    (int)Configuration::get('PS_OS_ERROR'),
-                    $amount,
-                    $this->module->displayName,
-                    'Pago con tarjeta fallido',
-                    [],
-                    (int)$cart->id_currency,
-                    false,
-                    $customer->secure_key
-                );
-
-                $redirect = $this->context->link->getPageLink('order', true, null, 'step=3&error=1');
-
+                // PAGO FALLIDO: NO SE VÁLIDA EL PEDIDO, solo se devuelve un error
+                $msg = $this->module->l('El pago con tarjeta ha fallado.');
+                
+                // NOTA: No se llama a validateOrder() aquí, para que el carrito no se vacíe.
+                // El cliente permanece en la página de checkout.
+                
                 if ($isAjax) {
-                    return ['success' => false, 'error' => $this->module->l('El pago con tarjeta ha fallado.'), 'redirect' => $redirect];
+                    return ['success' => false, 'error' => $msg];
                 }
 
-                Tools::redirect($redirect);
+                // Fallback para POST normal
+                Tools::redirect('index.php?controller=order&step=3&error=1');
             }
         } catch (Exception $e) {
-            // Mensaje genérico y registro en logs si deseas.
+            // Manejo de errores de código
             $msg = $this->module->l('Error procesando el pago:') . ' ' . $e->getMessage();
-
             PrestaShopLogger::addLog('Pago_tarjeta_prueba error: ' . $e->getMessage(), 3, null, 'Pago_tarjeta_prueba', (int)$cart->id, true);
 
             if ($isAjax) {
                 return ['success' => false, 'error' => $msg];
             }
 
+            // Fallback para POST normal
             Tools::redirect('index.php?controller=order&step=3&error=1');
         }
     }

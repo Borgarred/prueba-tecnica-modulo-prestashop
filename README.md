@@ -102,15 +102,15 @@ pago_tarjeta_prueba/
 
 **Error en el pago:**
 
-![alt text](imgs-readme/image-1.png)
+![alt text](imgs-readme/pago-erroneo.png)
 
 **Confirmación de pago:**
 
-![alt text](imgs-readme/image-3.png)
+![alt text](imgs-readme/pago-confirmado.png)
 
 **Historial de pedidos:**
 
-![alt text](imgs-readme/image-4.png)
+![alt text](imgs-readme/historial-pedidos.png)
 
 **Autor del módulo:**
 _Borja Garramiola_

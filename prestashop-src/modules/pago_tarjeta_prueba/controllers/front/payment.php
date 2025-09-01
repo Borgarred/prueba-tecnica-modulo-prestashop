@@ -2,14 +2,12 @@
 
 class Pago_tarjeta_pruebaPaymentModuleFrontController extends ModuleFrontController
 {
-    /**
-     * @var Pago_tarjeta_prueba
-     */
+    /** @var Pago_tarjeta_prueba */
     public $module;
 
     public function __construct()
     {
-        $this->module = new Pago_tarjeta_prueba();
+        $this->module = Module::getInstanceByName('pago_tarjeta_prueba');
         parent::__construct();
     }
 
@@ -17,72 +15,113 @@ class Pago_tarjeta_pruebaPaymentModuleFrontController extends ModuleFrontControl
     {
         parent::initContent();
 
-        // 1. Verificar si el módulo está activo
-        if (!$this->module->active) {
-            Tools::redirect('index.php?controller=order');
+        // Si se accede por GET mostramos la plantilla (útil para debug / acceso directo)
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $this->setTemplate('module:pago_tarjeta_prueba/views/templates/front/modulo_pago.tpl');
         }
-
-        // 2. Obtener el carrito y verificar que sea válido
-        $cart = $this->context->cart;
-        if (!Validate::isLoadedObject($cart) || $cart->nbProducts() <= 0) {
-            Tools::redirect('index.php?controller=order');
-        }
-
-        // 3. Obtener el cliente y verificar que sea válido
-        $customer = new Customer($cart->id_customer);
-        if (!Validate::isLoadedObject($customer)) {
-            Tools::redirect('index.php?controller=order');
-        }
-
-        // Aquí pasarías las variables necesarias a la plantilla del formulario de pago
-        $this->context->smarty->assign([
-            'total_to_pay' => $cart->getOrderTotal(true, Cart::BOTH),
-            'currency' => new Currency($cart->id_currency),
-            'cart_id' => $cart->id,
-            'secure_key' => $customer->secure_key,
-        ]);
-
-        // Mostrar la plantilla que contiene el formulario de pago simulado
-        $this->setTemplate('module:pago_tarjeta_prueba/views/templates/front/modulo_pago.tpl');
     }
 
-    /**
-     * @see FrontController::postProcess()
-     */
     public function postProcess()
     {
-        // Este método se activa cuando se envía el formulario
-        if (Tools::isSubmit('pago_tarjeta_prueba_submit')) {
-            // Lógica de validación de los datos del formulario
-            $this->processPayment();
+        // AJAX desde JS: procesamos y devolvemos JSON
+        if (Tools::getValue('ajax') === '1') {
+            $response = $this->processPayment(true);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($response);
+            exit;
+        }
+
+        // Si el formulario fue enviado por POST normal ( fallback )
+        if (Tools::getValue('pago_tarjeta_prueba_submit')) {
+            $this->processPayment(false);
         }
     }
 
     /**
-     * Lógica para procesar el pago y crear el pedido
+     * @param bool $isAjax Si es true no redirigimos: devolvemos array con resultado.
+     * @return array|null
      */
-    protected function processPayment()
+    protected function processPayment($isAjax = false)
     {
-        // 1. Obtener el carrito
+        $card_number_raw = Tools::getValue('card_number');
+        $sanitized_card_number = str_replace(' ', '', (string)$card_number_raw);
+
         $cart = $this->context->cart;
+        $customer = $this->context->customer;
 
-        // 2. Obtener el cliente
-        $customer = new Customer($cart->id_customer);
+        if (!$cart || !$customer || !$customer->id) {
+            $msg = $this->module->l('No se ha encontrado carrito o usuario. Vuelva a intentarlo.');
+            if ($isAjax) {
+                return ['success' => false, 'error' => $msg];
+            }
+            Tools::redirect('index.php?controller=order&step=1&error=1');
+        }
 
-        // 3. Crear el pedido
-        $this->module->validateOrder(
-            (int)$cart->id,
-            Configuration::get('PS_OS_PAYMENT'), // Estado del pedido: Pago aceptado
-            (float)$cart->getOrderTotal(true, Cart::BOTH),
-            $this->module->displayName,
-            null,
-            [],
-            (int)$cart->id_currency,
-            false,
-            $customer->secure_key
-        );
+        $amount = (float) $cart->getOrderTotal(true, Cart::BOTH);
 
-        // 4. Redirigir a la página de confirmación
-        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int)$cart->id . '&id_module=' . (int)$this->module->id . '&id_order=' . (int)$this->module->currentOrder . '&key=' . $customer->secure_key);
+        try {
+            if ($sanitized_card_number === '1234567890123456') {
+                // Pago aceptado
+                $this->module->validateOrder(
+                    (int)$cart->id,
+                    (int)Configuration::get('PS_OS_PAYMENT'),
+                    $amount,
+                    $this->module->displayName,
+                    null,
+                    [],
+                    (int)$cart->id_currency,
+                    false,
+                    $customer->secure_key
+                );
+
+                $redirect = $this->context->link->getPageLink(
+                    'order-confirmation',
+                    true,
+                    null,
+                    'id_cart=' . (int)$cart->id
+                    . '&id_module=' . (int)$this->module->id
+                    . '&id_order=' . (int)$this->module->currentOrder
+                    . '&key=' . $customer->secure_key
+                );
+
+                if ($isAjax) {
+                    return ['success' => true, 'redirect' => $redirect];
+                }
+
+                Tools::redirect($redirect);
+            } else {
+                // Pago fallido -> crear pedido con estado de error según requisitos
+                $this->module->validateOrder(
+                    (int)$cart->id,
+                    (int)Configuration::get('PS_OS_ERROR'),
+                    $amount,
+                    $this->module->displayName,
+                    'Pago con tarjeta fallido',
+                    [],
+                    (int)$cart->id_currency,
+                    false,
+                    $customer->secure_key
+                );
+
+                $redirect = $this->context->link->getPageLink('order', true, null, 'step=3&error=1');
+
+                if ($isAjax) {
+                    return ['success' => false, 'error' => $this->module->l('El pago con tarjeta ha fallado.'), 'redirect' => $redirect];
+                }
+
+                Tools::redirect($redirect);
+            }
+        } catch (Exception $e) {
+            // Mensaje genérico y registro en logs si deseas.
+            $msg = $this->module->l('Error procesando el pago:') . ' ' . $e->getMessage();
+
+            PrestaShopLogger::addLog('Pago_tarjeta_prueba error: ' . $e->getMessage(), 3, null, 'Pago_tarjeta_prueba', (int)$cart->id, true);
+
+            if ($isAjax) {
+                return ['success' => false, 'error' => $msg];
+            }
+
+            Tools::redirect('index.php?controller=order&step=3&error=1');
+        }
     }
 }

@@ -90,11 +90,13 @@ pago_tarjeta_prueba/
 3. **Implementar la lógica real:**
 
    - He desarrollado la lógica necesaria para la implementación de un módulo de pago con tarjeta.
-   - He han utilizado los **hooks** de PrestaShop (`hookDisplayHome`, `hookDisplayHeader`, etc.) para integrar el módulo en las diferentes secciones del _front-office_ o _back-office_.
+   - He utilizado los **hooks** de PrestaShop (`hookDisplayHome`, `hookDisplayHeader`, etc.) para integrar el módulo en las diferentes secciones del _front-office_ o _back-office_.
 
 4. **Instalar y probar:**
    - El módulo se puede instalar desde el _back-office_ de PrestaShop navegando a `Módulos > Módulo y Servicios`.
    - Una vez instalado, he verificado su correcto funcionamiento en el _front-office_ para asegurar que cumple con los requisitos de la prueba técnica.
+
+![alt text](image.png)
 
 **Autor del módulo:**
 _Borja Garramiola_

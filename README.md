@@ -72,12 +72,15 @@ pago_tarjeta_prueba/
 │ ├── payment.php
 │ └── validation.php
 ├── views/
+│ ├── js
+│ │ ├── payment.js
 │ ├── templates/
 │ │ ├── front/
-│ │ │ └── payment_form.tpl
+│ │ │ └── modulo_pago.tpl
 │ │ └── admin/
-│ │ └── config_form.tpl
-│
+│ │ │ └── config_form.tpl
+│ │ └── hook/
+│ │ │ └── payment_return.tpl
 ```
 
 2.  **Módulo sencillo de prueba:** Para testear el correcto funcionamiento del módulo y el entorno, cree temporalmente unos archivos de prueba a los que accedí a través del modo desarrollador.
